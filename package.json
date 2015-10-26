@@ -1,0 +1,27 @@
+{
+  "name": "typeset",
+  "version": "0.0.1",
+  "description": "TeX line breaking algorithm in JavaScript",
+  "main": "index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "start": "nodemon --exec 'babel-node' devServer.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AprilArcus/typeset.git"
+  },
+  "author": "Bram Stein & April Arcus",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "bugs": {
+    "url": "https://github.com/AprilArcus/typeset/issues"
+  },
+  "homepage": "https://github.com/AprilArcus/typeset#readme",
+  "devDependencies": {
+    "babel": "^5.8.29",
+    "express": "^4.13.3",
+    "nodemon": "^1.8.0"
+  }
+}
