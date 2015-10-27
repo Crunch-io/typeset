@@ -1,5 +1,4 @@
-require('script!../../src/linked-list.js');
-require('script!../../src/linebreak.js');
+var Typeset = require('../../src/');
 var Hypher = require('hypher');
 var english = require('hyphenation.en-us');
 var jQuery = require('jQuery');

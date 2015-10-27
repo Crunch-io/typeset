@@ -10,10 +10,9 @@
 
 var Hypher = require('hypher');
 var english = require('hyphenation.en-us');
- 
-Typeset.formatter = function (measureText, options) {
-	var linebreak = Typeset.linebreak;
+var linebreak = require('./linebreak');
 
+function formatter(measureText, options) {
     var spaceWidth = measureText(' '),
         o = {
             space: {
@@ -123,12 +122,14 @@ Typeset.formatter = function (measureText, options) {
             return nodes;
         }
     };
-};
+}
 
-Typeset.formatter.defaults = {
+formatter.defaults = {
     space: {
         width: 3,
         stretch: 6,
         shrink: 9
     }
 };
+
+module.exports = formatter;

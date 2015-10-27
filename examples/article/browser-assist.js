@@ -1,4 +1,5 @@
 var jQuery = require('jQuery');
+var Typeset = require('../../src/');
 
 jQuery(function ($) {
 	var ruler = $('<div class="example"></div>').css({

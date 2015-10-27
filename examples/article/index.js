@@ -1,7 +1,5 @@
 var jQuery = require('jQuery');
-require('script!../../src/linked-list.js');
-require('script!../../src/linebreak.js');
-require('../../src/formatter.js');
+var Typeset = require('../../src/');
 require('./browser');
 require('./browser-assist');
 

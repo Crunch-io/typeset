@@ -8,12 +8,15 @@ export default {
     flatland: './examples/flatland/index.js'
   },
   output: {
-    path: path.join(__dirname, 'dist'),
-    filename: '[name].js',
-    publicPath: '/static/'
+    path: __dirname,
+    filename: '[name]/bundle.js'
   },
   plugins: [
-    new webpack.NoErrorsPlugin()
+    new webpack.NoErrorsPlugin(),
+    new webpack.optimize.CommonsChunkPlugin({
+      name: 'commons',
+      filename: 'commons.js'
+    })
   ],
   externals: {
     "jquery": "jQuery"

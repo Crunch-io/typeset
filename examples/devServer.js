@@ -8,7 +8,7 @@ const compiler = webpack(config);
 
 const app = express();
 
-app.use(express.static('./examples'));
+app.use(express.static(path.join(__dirname, '/')));
 
 app.use(webpackDevMiddleware(compiler, {
   noInfo: true,
