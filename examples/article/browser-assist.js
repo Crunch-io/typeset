@@ -1,3 +1,5 @@
+var jQuery = require('jQuery');
+
 jQuery(function ($) {
 	var ruler = $('<div class="example"></div>').css({
 			visibility: 'hidden',

@@ -1,15 +1,15 @@
 require('script!../../src/linked-list.js');
 require('script!../../src/linebreak.js');
-require('script!../../lib/hypher.js');
-require('script!../../lib/en-us.js');
-require('script!../../lib/jquery-1.4.2.js');
+var Hypher = require('hypher');
+var english = require('hyphenation.en-us');
+var jQuery = require('jQuery');
 
 jQuery(function ($) {
   var lineLength = 0,
     lineHeight = 0,
     lineLengths = [],
     tmp, ruler,
-              h = new Hypher(Hypher.en),
+              h = new Hypher(english),
     cache = {};
 
   var linebreak = Typeset.linebreak;

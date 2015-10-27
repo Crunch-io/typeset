@@ -7,6 +7,10 @@
  * Copyright 2009-2010, Bram Stein
  * All rights reserved.
  */
+
+var Hypher = require('hypher');
+var english = require('hyphenation.en-us');
+ 
 Typeset.formatter = function (measureText, options) {
 	var linebreak = Typeset.linebreak;
 
@@ -18,7 +22,7 @@ Typeset.formatter = function (measureText, options) {
                 shrink: options && options.space.shrink || 9
             }
         },
-        h = new Hypher(Hypher.en),
+        h = new Hypher(english),
         hyphenWidth = measureText('-'),
         hyphenPenalty = 100;
 

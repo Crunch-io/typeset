@@ -1,3 +1,5 @@
+var jQuery = require('jQuery');
+
 jQuery(function ($) {
 	function browserTypeset() {
 		var original = $('#browser'),

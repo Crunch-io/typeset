@@ -14,5 +14,8 @@ export default {
   },
   plugins: [
     new webpack.NoErrorsPlugin()
-  ]
+  ],
+  externals: {
+    "jquery": "jQuery"
+  }
 };

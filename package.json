@@ -3,9 +3,6 @@
   "version": "0.0.1",
   "description": "TeX line breaking algorithm in JavaScript",
   "main": "index.js",
-  "directories": {
-    "example": "examples"
-  },
   "scripts": {
     "start": "nodemon --exec 'babel-node' devServer.js"
   },
@@ -22,9 +19,14 @@
   "devDependencies": {
     "babel": "^5.8.29",
     "express": "^4.13.3",
+    "jquery": "2.1.4",
     "nodemon": "^1.8.0",
     "script-loader": "^0.6.1",
     "webpack": "^1.12.2",
     "webpack-dev-middleware": "^1.2.0"
+  },
+  "dependencies": {
+    "hyphenation.en-us": "^0.2.1",
+    "hypher": "^0.2.3"
   }
 }
