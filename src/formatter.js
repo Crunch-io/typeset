@@ -20,7 +20,7 @@ function formatter({
         text,
         measureText,
         space: {width = 3, stretch = 6, shrink = 9} = {},
-        textAlign,
+        textAlign = 'justify',
         indent = 0,
         hyphenateLimitChars = 5
     } = {}) {

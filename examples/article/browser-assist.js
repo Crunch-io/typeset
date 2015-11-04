@@ -7,15 +7,18 @@ function wordSpacing(ratio) {
 	return ratio * (ratio < 0 ? spaceShrink : spaceStretch);
 }
 
-function browserAssistTypeset(id, measureText, text, type, lineLengths, tolerance) {
+export default function browserAssistTypeset(
+	{ id, text, measureText, textAlign, lineLengths, tolerance }
+) {
 	const browserAssistElement = document.getElementById(id);
 
-	const nodes = formatter({text, measureText, textAlign: type, hyphenateLimitChars: 4});
+	const nodes =
+		formatter({ text, measureText, textAlign, hyphenateLimitChars: 4 });
 	const { positions, ratios } = linebreak(nodes, lineLengths, {tolerance: tolerance});
 
 	const lines = positions.map((position, i, positions) => {
-		// After a line break, we skip any nodes unless they are boxes or forced breaks.
 		let lastBreak = positions[i - 1] || 0;
+		// After a line break, we skip any nodes unless they are boxes or forced breaks.
 		// while (lastBreak < nodes.length) {
 		// 	if (nodes[lastBreak].Box) break;
 		// 	if (nodes[lastBreak].Penalty && nodes[lastBreak] === -INFINITY) break;
@@ -53,29 +56,3 @@ function browserAssistTypeset(id, measureText, text, type, lineLengths, toleranc
 
 	browserAssistElement.parentNode.appendChild(ratiosList);
 }
-
-document.addEventListener('DOMContentLoaded', () => { 
-
-	const ruler = document.createElement('div');
-	ruler.className = 'example';
-	ruler.style.visibility = 'hidden';
-	document.body.appendChild(ruler);
-
-  const ctx = document.createElement('canvas').getContext('2d');
-  const computedStyle = getComputedStyle(ruler);
-  ctx.font =
-    computedStyle.fontStyle + ' ' +
-    computedStyle.fontVariant + ' ' +
-    computedStyle.fontWeight + ' ' +
-    computedStyle.fontSize + '/' +
-    computedStyle.lineHeight + ' ' +
-    computedStyle.fontFamily + ' ';
-
-  const cache = {};
-  function measureText(str) {
-    if (!cache[str]) return cache[str] = Math.round(ctx.measureText(str).width);
-    return cache[str];
-  }
-
-	browserAssistTypeset('browser-assist', measureText, window.text, 'justify', [350], 3);
-});
