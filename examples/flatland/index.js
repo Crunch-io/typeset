@@ -1,38 +1,30 @@
-var Typeset = require('../../src/');
-var Hypher = require('hypher');
-var english = require('hyphenation.en-us');
+import { linebreak, INFINITY, formatter } from 'typeset';
 var jQuery = require('jQuery');
 
 jQuery(function ($) {
-  var lineLength = 0,
-    lineHeight = 0,
-    lineLengths = [],
-    tmp, ruler,
-              h = new Hypher(english),
-    cache = {};
+  const start = window.performance.now();
 
-  var linebreak = Typeset.linebreak;
+  var tmp;
 
+  const ctx = document.createElement('canvas').getContext('2d');
+  const computedStyle = getComputedStyle(document.body);
+  ctx.font =
+    computedStyle.fontStyle + ' ' +
+    computedStyle.fontVariant + ' ' +
+    computedStyle.fontWeight + ' ' +
+    computedStyle.fontSize + '/' +
+    computedStyle.lineHeight + ' ' +
+    computedStyle.fontFamily + ' ';
+
+  const cache = {};
   function measureString(str) {
-    if (!cache[str]) {
-      ruler[0].firstChild.nodeValue = str;
-      cache[str] = ruler[0].offsetWidth;
-    }
+    if (!cache[str]) return cache[str] = Math.round(ctx.measureText(str).width);
     return cache[str];
   }
 
-  lineLength = $('#typeset').width();
-
-  ruler = $('<div class="ruler">&nbsp;</div>').css({
-    visibility: 'hidden',
-    position: 'absolute',
-    top: '-8000px',
-    width: 'auto',
-    display: 'inline',
-    left: '-8000px'
-  });
-
-  $('body').append(ruler);
+  const lineHeight = parseFloat(getComputedStyle(document.body).lineHeight);
+  const lineLength = $('#typeset').width();
+  let lineLengths = [];
 
   var space = {
       width: 0,
@@ -43,85 +35,63 @@ jQuery(function ($) {
     hyphenPenalty = 100;
 
   // Calculate the space widths based on our font preferences
-  space.width = ruler.html('&nbsp;').width();
+  space.width = measureString('\u{00A0}');
   space.stretch = (space.width * 3) / 6;
   space.shrink = (space.width * 3) / 9;
-
-  lineHeight = parseFloat(ruler.html('Hello World').css('lineHeight'));
 
   $('#typeset .section').each(function () {
     $(this).find('p, img').each(function (index, element) {
       var paragraph,
-        nodes = [],
-        breaks = [],
         output = [],
         lines = [],
         words,
         carryOver = null,
-        i, point, r, lineStart,
+        lineStart,
         iterator,
         token, hyphenated;
 
       if (element.nodeName.toUpperCase() === 'P') {
         paragraph = $(element);
 
-        if (index !== 0) {
-          nodes.push(linebreak.box(30, ''));
-        }
-
-        words = paragraph.text().split(/\s/);
-
-        words.forEach(function (word, index, array) {
-          var hyphenated = [];
-          if (word.length > 6) {
-            hyphenated = h.hyphenate(word, 'en');
-          }
-
-          if (hyphenated.length > 1) {
-            hyphenated.forEach(function (part, partIndex, partArray) {
-              nodes.push(linebreak.box(measureString(part), part));
-              if (partIndex !== partArray.length - 1) {
-                nodes.push(linebreak.penalty(hyphenWidth, hyphenPenalty, 1));
-              }
-            });
-          } else {
-            nodes.push(linebreak.box(measureString(word), word));
-          }
-
-          if (index === array.length - 1) {
-            nodes.push(linebreak.glue(0, linebreak.infinity, 0));
-            nodes.push(linebreak.penalty(0, -linebreak.infinity, 1));
-          } else {
-            nodes.push(linebreak.glue(space.width, space.stretch, space.shrink));
-          }
+        const nodes = formatter({
+          text: paragraph.text(),
+          measureText: measureString,
+          indent: index === 0 ? 0 : 30,
+          hyphenateLimitChars: 6
         });
 
         // Perform the line breaking
-        breaks = linebreak(nodes, lineLengths.length !== 0 ? lineLengths : [lineLength], {tolerance: 1});
-
-        // Try again with a higher tolerance if the line breaking failed.
-        if (breaks.length === 0) {
-          breaks = linebreak(nodes, lineLengths.length !== 0 ? lineLengths : [lineLength], {tolerance: 2});
-          // And again
-          if (breaks.length === 0) {
-            breaks = linebreak(nodes, lineLengths.length !== 0 ? lineLengths : [lineLength], {tolerance: 3});
-          }
+        let breaks;
+        for (let tolerance = 1; tolerance <= 3; tolerance++) {
+          // Try again with a higher tolerance if the line breaking failed.
+          breaks = linebreak(
+            nodes,
+            lineLengths.length !== 0 ? lineLengths : [lineLength],
+            { tolerance }
+          );
+          if (!breaks.error) break;
         }
+        if (breaks.error) throw breaks.error;
 
         // Build lines from the line breaks found.
-        for (i = 1; i < breaks.length; i += 1) {
-          point = breaks[i].position,
-          r = breaks[i].ratio;
+        const { positions, ratios } = breaks;
+        for (let i = 0; i < positions.length; i++) {
+          const position = positions[i];
+          const ratio = ratios[i];
 
-          for (var j = lineStart; j < nodes.length; j += 1) {
+          for (let j = lineStart; j < nodes.length; j += 1) {
             // After a line break, we skip any nodes unless they are boxes or forced breaks.
-            if (nodes[j].type === 'box' || (nodes[j].type === 'penalty' && nodes[j].penalty === -linebreak.infinity)) {
+            if (nodes[j].Box || (nodes[j].Penalty && nodes[j].penalty === -INFINITY)) {
               lineStart = j;
               break;
             }
           }
-          lines.push({ratio: r, nodes: nodes.slice(lineStart, point + 1), position: point});
-          lineStart = point;
+          lines.push({
+            ratio,
+            position,
+            nodes: nodes.slice(lineStart, position + 1)
+          });
+          lineStart = position;
         }
 
         lines.forEach(function (line, lineIndex, lineArray) {
@@ -137,27 +107,27 @@ jQuery(function ($) {
           // Iterate over the nodes in each line and build a temporary array containing just words, spaces, and soft-hyphens.
           line.nodes.forEach(function (n, index, array) {
             // normal boxes
-            if (n.type === 'box' && n.value !== '') {
+            if (n.Box && n.value !== '') {
               if (tmp.length !== 0 && tmp[tmp.length - 1] !== '&nbsp;') {
                 tmp[tmp.length - 1] += n.value;
               } else {
                 tmp.push(n.value);
               }
             // empty boxes (indentation for example)
-            } else if (n.type === 'box' && n.value === '') {
+            } else if (n.Box && n.value === '') {
               output.push('<span style="margin-left: 30px;"></span>');
             // glue inside a line
-            } else if (n.type === 'glue' && index !== array.length - 1) {
+            } else if (n.Glue && index !== array.length - 1) {
               tmp.push('&nbsp;');
               spaces += 1;
             // glue at the end of a line
-            } else if (n.type === 'glue') {
+            } else if (n.Glue) {
               tmp.push(' ');
             // hyphenated word at the end of a line
-            } else if (n.type === 'penalty' && n.penalty === hyphenPenalty && index === array.length - 1) {
+            } else if (n.Penalty && n.penalty === hyphenPenalty && index === array.length - 1) {
               tmp.push('&shy;');
             // Remove trailing space at the end of a paragraph
-            } else if (n.type === 'penalty' && index === array.length - 1 && tmp[tmp.length - 1] === '&nbsp;') {
+            } else if (n.Penalty && index === array.length - 1 && tmp[tmp.length - 1] === '&nbsp;') {
               tmp.pop();
             }
           });
@@ -184,18 +154,19 @@ jQuery(function ($) {
           }
         });
 
-        paragraph.empty();
-        paragraph.append(output.join(''));
-        currentWidth = lineLength;
+        paragraph.html(output.join(''));
+        // currentWidth = lineLength;
 
         lineLengths = lineLengths.slice(lines.length);
       } else {
         tmp = (lineLength - $(element).outerWidth(true));
-        for (i = 0; i < Math.ceil($(element).outerHeight(true) / lineHeight); i += 1) {
+        for (let i = 0; i < Math.ceil($(element).outerHeight(true) / lineHeight); i += 1) {
           lineLengths.push(tmp);
         }
         lineLengths.push(lineLength);
       }
     });
   });
+
+  console.log('done rendering', window.performance.now()-start);
 });

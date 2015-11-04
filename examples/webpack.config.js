@@ -7,6 +7,20 @@ export default {
     article: './examples/article/index.js',
     flatland: './examples/flatland/index.js'
   },
+  resolve: {
+    alias: {
+      typeset: path.join(__dirname, '..', 'src')
+    }
+  },
+  module: {
+    loaders: [
+      {
+        test: /\.js$/,
+        loader: 'babel',
+        exclude: /node_modules/
+      }
+    ]
+  },
   output: {
     path: __dirname,
     filename: '[name]/bundle.js'
@@ -19,6 +33,6 @@ export default {
     })
   ],
   externals: {
-    "jquery": "jQuery"
+    // "jquery": "jQuery"
   }
 };

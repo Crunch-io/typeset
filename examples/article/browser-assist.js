@@ -1,65 +1,81 @@
-var jQuery = require('jQuery');
-var Typeset = require('../../src/');
+import { formatter, linebreak, INFINITY } from 'typeset';
 
-jQuery(function ($) {
-	var ruler = $('<div class="example"></div>').css({
-			visibility: 'hidden',
-			position: 'absolute',
-			top: '-8000px',
-			width: 'auto',
-			display: 'inline',
-			left: '-8000px'
-		}),
-		format;
+const spaceShrink = 1 / 9 * 12;
+const spaceStretch = 1 / 6 * 12;
 
-	$('body').append(ruler);
+function wordSpacing(ratio) {
+	return ratio * (ratio < 0 ? spaceShrink : spaceStretch);
+}
 
-	format = Typeset.formatter(function (str) {
-		if (str !== ' ') {
-			return ruler.text(str).width();
-		} else {
-			return ruler.html('&nbsp;').width();
-		}
+function browserAssistTypeset(id, measureText, text, type, lineLengths, tolerance) {
+	const browserAssistElement = document.getElementById(id);
+
+	const nodes = formatter({text, measureText, textAlign: type, hyphenateLimitChars: 4});
+	const { positions, ratios } = linebreak(nodes, lineLengths, {tolerance: tolerance});
+
+	const lines = positions.map((position, i, positions) => {
+		// After a line break, we skip any nodes unless they are boxes or forced breaks.
+		let lastBreak = positions[i - 1] || 0;
+		// while (lastBreak < nodes.length) {
+		// 	if (nodes[lastBreak].Box) break;
+		// 	if (nodes[lastBreak].Penalty && nodes[lastBreak] === -INFINITY) break;
+		// 	lastBreak++;
+		// }
+		return nodes.slice(lastBreak, position);
 	});
 
-	function browserAssistTypeset(identifier, text, type, lineLengths, tolerance) {
-		var nodes = format[type](text),
-			breaks = Typeset.linebreak(nodes, lineLengths, {tolerance: tolerance}),
-			lines = [],
-			i, point, r, lineStart,
-			browserAssist = $(identifier).after('<ul></ul>'),
-			browserAssistRatio = $(identifier + ' + ul');
+	// set the lines
+	const linesFragment = document.createDocumentFragment();
 
-		// Iterate through the line breaks, and split the nodes at the
-		// correct point.
-		for (i = 1; i < breaks.length; i += 1) {
-			point = breaks[i].position,
-			r = breaks[i].ratio;
+	lines.forEach((nodes, i) => {
+		const span = document.createElement('span');
+		span.style.wordSpacing = `${wordSpacing(ratios[i])}px`;
+		span.style.display = 'inline-block';
+		span.style.whiteSpace = 'nowrap';
+		span.appendChild(document.createTextNode(nodes.reduce((memo, node) => {
+			if (node.Box) return memo + node.value;
+			if (node.Glue) return memo + ' ';
+			return memo
+		}, '')));
+		linesFragment.appendChild(span);
+	});
 
-			for (var j = lineStart; j < nodes.length; j += 1) {
-				// After a line break, we skip any nodes unless they are boxes or forced breaks.
-				if (nodes[j].type === 'box' || (nodes[j].type === 'penalty' && nodes[j].penalty === -Typeset.linebreak.infinity)) {
-					lineStart = j;
-					break;
-				}
-			}
-			lines.push({ratio: r, nodes: nodes.slice(lineStart, point + 1), position: point});
-			lineStart = point;
-		}
+	browserAssistElement.appendChild(linesFragment);
 
-		lines = lines.map(function (line) {
-			var spaceShrink = 1 / 9 * 12,
-				spaceStretch = 1 / 6 * 12,
-				ratio = line.ratio * (line.ratio < 0 ? spaceShrink : spaceStretch);
+	// set the ratios
+	const ratiosList = document.createElement('ul');
 
-			var output = '<span style="word-spacing: ' + ratio.toFixed(3) + 'px; display: inline-block; white-space: nowrap;">' + line.nodes.filter(function (n) {
-				return n.type === 'box';
-			}).map(function (n) {
-				return n.value;
-			}).join(' ') + '</span>';
-			browserAssist.append(output);
-			browserAssistRatio.append('<li>' + line.ratio.toFixed(3) + '</li>');
-		});
-	}
-	browserAssistTypeset('#browser-assist', text, 'justify', [350], 3);
+	ratios.forEach(ratio => {
+		const li = document.createElement('li');
+		li.appendChild(document.createTextNode(ratio.toFixed(3)));
+		ratiosList.appendChild(li);
+	});
+
+	browserAssistElement.parentNode.appendChild(ratiosList);
+}
+
+document.addEventListener('DOMContentLoaded', () => { 
+
+	const ruler = document.createElement('div');
+	ruler.className = 'example';
+	ruler.style.visibility = 'hidden';
+	document.body.appendChild(ruler);
+
+  const ctx = document.createElement('canvas').getContext('2d');
+  const computedStyle = getComputedStyle(ruler);
+  ctx.font =
+    computedStyle.fontStyle + ' ' +
+    computedStyle.fontVariant + ' ' +
+    computedStyle.fontWeight + ' ' +
+    computedStyle.fontSize + '/' +
+    computedStyle.lineHeight + ' ' +
+    computedStyle.fontFamily + ' ';
+
+  const cache = {};
+  function measureText(str) {
+    if (!cache[str]) return cache[str] = Math.round(ctx.measureText(str).width);
+    return cache[str];
+  }
+
+	browserAssistTypeset('browser-assist', measureText, window.text, 'justify', [350], 3);
 });

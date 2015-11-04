@@ -1,16 +1,17 @@
-function LinkedList() {
+/* @flow */
+export function LinkedList() {
     this.head = null;
     this.tail = null;
     this.listSize = 0;
 };
 
-LinkedList.Node = function (data) {
+export function Node(data: any) {
     this.prev = null;
     this.next = null;
     this.data = data;
 };
 
-LinkedList.Node.prototype.toString = function () {
+Node.prototype.toString = function () {
     return this.data.toString();
 };
 
@@ -180,5 +181,3 @@ LinkedList.prototype.shift = function () {
     node.next = null;
     return node;
 };
-
-module.exports = LinkedList;
