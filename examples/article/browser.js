@@ -42,7 +42,7 @@ export default function browserTypeset({ id, text, measureText }) {
 
 	const spaceWidth = measureText('\u{00A0}');
 
-	// sum up the width of and number of spaces on each line
+	// sum up the width of each line and its number of spaces
 	const lineWidths = lines.map( ({ nodes }) => {
 		const spaces = nodes
 			.filter(node => node.nodeType === node.TEXT_NODE)

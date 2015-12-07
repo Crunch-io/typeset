@@ -85,3 +85,32 @@ p.subtitle {
 blockquote {
 	font-style: italic;
 }
+
+.example {
+	margin: 1.35em auto;
+	text-align: center;
+}
+
+.example {
+	font-family: 'times new roman', 'FreeSerif', serif;
+	font-size: 14px;
+	line-height: 21px;
+}
+
+.example ul {
+	display: inline-block;
+	list-style-type: none;
+	padding: 0 0 0 1.5em;
+	margin: 0 auto 0 0;
+	text-align: right;
+}
+
+#browser, #browser-assist {
+	text-align: justify;
+	width: 350px;
+	margin: 0 0 0 auto;
+	display: inline-block;
+	font-family: 'times new roman', 'FreeSerif', serif;
+	font-size: 14px;
+	line-height: 21px;
+}

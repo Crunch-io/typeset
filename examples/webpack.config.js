@@ -5,7 +5,11 @@ export default {
   devtool: 'cheap-module-source-map',
   entry: {
     article: './examples/article/index.js',
-    flatland: './examples/flatland/index.js'
+    flatland: './examples/flatland/index.js',
+    react: [
+      'webpack-hot-middleware/client',
+      './examples/react/index.js'
+    ]
   },
   resolve: {
     alias: {
@@ -16,8 +20,13 @@ export default {
     loaders: [
       {
         test: /\.js$/,
-        loader: 'babel',
+        loaders: ['react-hot', 'babel'],
         exclude: /node_modules/
+      }
+    ],
+    postLoaders: [
+      {
+        loader: "transform?brfs"
       }
     ]
   },
@@ -26,6 +35,7 @@ export default {
     filename: '[name]/bundle.js'
   },
   plugins: [
+    new webpack.HotModuleReplacementPlugin(),
     new webpack.NoErrorsPlugin(),
     new webpack.optimize.CommonsChunkPlugin({
       name: 'commons',

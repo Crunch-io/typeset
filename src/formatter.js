@@ -52,6 +52,7 @@ function formatter({
         // if (hyphenated.length > 1 && word.length > 4) {
 
         if (word.length > hyphenateLimitChars) {
+            // TODO: remove second argument 'en'
             const syllables = h.hyphenate(word, 'en');
             syllables.forEach(function (part, partIndex, partArray) {
                 timeAssemblingNodes += window.performance.now() - start;

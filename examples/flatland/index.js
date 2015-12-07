@@ -26,15 +26,14 @@ jQuery(function ($) {
   const lineLength = $('#typeset').width();
   let lineLengths = [];
 
-  var space = {
-      width: 0,
-      stretch: 0,
-      shrink: 0
-    },
-    hyphenWidth = measureString('-'),
-    hyphenPenalty = 100;
+  const space = {
+    width: 0,
+    stretch: 0,
+    shrink: 0
+  };
+  const hyphenWidth = measureString('-');
+  const hyphenPenalty = 100;
 
-  // Calculate the space widths based on our font preferences
   space.width = measureString('\u{00A0}');
   space.stretch = (space.width * 3) / 6;
   space.shrink = (space.width * 3) / 9;
