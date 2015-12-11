@@ -33,8 +33,8 @@ export class App extends Component {
 
   render() {
     return (<div>
-      <Paragraph style={{textAlign: 'justify', fontFamily: 'Garamond'}} poll={this.state.poll}>
-        Some <b>inline markup</b> to test
+      <Paragraph style={{textAlign: 'justify', fontFamily: 'Garamond', fontSize: 25, lineHeight: '3.0'}} poll={this.state.poll}>
+        Those of the Persians who have knowledge of history declare that the Phenicians first began the quarrel. These, they say, came from that which is called the Erythraian Sea to this of ours; and having settled in the land where they continue even now to dwell, set themselves forthwith to make long voyages by sea. And conveying merchandise of Egypt and of Assyria they arrived at other places and also at Argos; now Argos was at that time in all points the first of the States within that land which is now called Hellas;--the Phenicians arrived then at this land of Argos, and began to dispose of their ship's cargo: and on the fifth or sixth day after they had arrived, when their goods had been almost all sold, there came down to the sea a great company of women, and among them the daughter of the king; and her name, as the Hellenes also agree, was Io the daughter of Inachos. These standing near to the stern of the ship were buying of the wares such as pleased them most, when of a sudden the Phenicians, passing the word from one to another, made a rush upon them; and the greater part of the women escaped by flight, but Io and certain others were carried off. So they put them on board their ship, and forthwith departed, sailing away to Egypt.
       </Paragraph>
     </div>);
   }

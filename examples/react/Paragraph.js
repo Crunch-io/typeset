@@ -1,11 +1,28 @@
 // © 2015 April Arcus
 
+class Counter {
+
+  constructor() {
+    this.bag = {};
+  }
+
+  count(string) {
+    var bag = this.bag;
+    bag[string] = bag[string] || 0;
+    var count = bag[string];
+    bag[string] = bag[string] + 1;
+    return count;
+  }
+
+}
+
+
 import React, { PropTypes, Component, Children, cloneElement } from 'react';
 import { linebreak } from 'typeset';
 
 import decorateTree from './decorateTree';
 import { childrenEqual, shallowEqual } from './equality'
-import buildPenaltyBox from './buildPenaltyBox';
+import { buildPenaltyBox, OPEN_SCOPE, CLOSE_SCOPE } from './buildPenaltyBox';
 
 export class Paragraph extends Component {
 
@@ -66,8 +83,8 @@ export class Paragraph extends Component {
       // recompute it and reflow the text.
 
     // transferring nextProps above covers the possibility of an updated style
-    // prop, so now we consider the case in which props.children passes the
-    // deep equality test, but props.style does not.
+    // prop, so now we consider the case in which props.children has passed the
+    // equality test, but props.style has not.
     } else if (!shallowEqual(props.style, nextProps.style)) {
 
       // This saves the work of redecorating the tree by updating the style of
@@ -78,9 +95,8 @@ export class Paragraph extends Component {
       // and we know that componentDidUpdate() will check to see if any
       // relevant styles have changed in DOM land.
 
-      const { virtualDOMNodes, rootId } = this.state.decoratedTree;
-      virtualDOMNodes[rootId] = cloneElement(
-        virtualDOMNodes[rootId], { style: nextProps.style }
+      this.decoratedTree.tree = cloneElement(
+        this.decoratedTree.tree, { style: nextProps.style }
       );
       this.forceUpdate();
 
@@ -119,10 +135,9 @@ export class Paragraph extends Component {
   updateComputedWidth(event) {
     // updateComputedWidth() will only ever be called after componentDidMount()
     // has populated cachedStyles by calling updateComputedStyles(), so we
-    // don't need to consider the case where cachedStyles[rootId] === undefined
-    const { rootId, computedStyles } = this.decoratedTree;
-    const rootStyles = cachedStyles[rootId];
-    const { width } = computedStyles[rootId];
+    // don't need to consider the case where cachedStyles[0] === undefined
+    const rootStyles = this.cachedStyles[0];
+    const { width } = this.containerStyles;
     if (rootStyles.width !== width) {
       rootStyles.width = width;
       rootStyles.parsedWidth = parseFloat(width);
@@ -143,40 +158,51 @@ export class Paragraph extends Component {
     let penaltyBoxIsOutdated = this.penaltyBox === undefined;
 
     // update inline font descriptors
-    const { cachedStyles } = this;
-    const { rootId, length, computedStyles, virtualDOMNodes } =
-      this.decoratedTree;
+    const { cachedStyles, containerStyles } = this;
+    const { length, computedStyles, tree } = this.decoratedTree;
 
-    for (let id = rootId; id < length; id++) {
-      const previous = cachedStyles[id];
+    for (let id = 0; id < length; id++) {
+      if (cachedStyles[id] === undefined) cachedStyles[id] = {};
+      const cached = cachedStyles[id];
       const next = computedStyles[id];
       const { fontStyle, fontVariant, fontWeight, fontSize, fontFamily } =
         next;
-      if (!previous ||
-          previous.fontStyle   !== fontStyle   ||
-          previous.fontVariant !== fontVariant ||
-          previous.fontWeight  !== fontWeight  ||
-          previous.fontSize    !== fontSize    ||
-          previous.fontFamily  !== fontFamily) {
+      let dirty = false;
+      if (cached.fontStyle !== fontStyle) {
+        dirty = true;
+        cached.fontStyle = fontStyle
+      }
+      if (cached.fontVariant !== fontVariant) {
+        dirty = true;
+        cached.fontVariant = fontVariant;
+      }
+      if (cached.fontWeight !== fontWeight) {
+        dirty = true;
+        cached.fontWeight = fontWeight;
+      }
+      if (cached.fontSize !== fontSize) {
+        dirty = true;
+        cached.fontSize = fontSize;
+        cached.parsedFontSize = parseFloat(fontSize);
+      }
+      if (cached.fontFamily !== fontFamily) {
+        dirty = true;
+        cached.fontFamily = fontFamily;
+      }
+      if (dirty === true) {
         penaltyBoxIsOutdated = true;
-        cachedStyles[id] = {
-          fontStyle,
-          fontVariant,
-          fontWeight,
-          fontSize,
-          fontFamily,
-          // Gecko will not report a font shorthand string, so we'll help
-          // it out. We omit lineHeight because Canvas will ignore it anyway
-          // (see buildPenaltyBox.js and measureText.js for implementation
-          // details)
-          font: next.font || `${fontStyle} ${fontVariant} ${fontWeight} ${fontSize} ${fontFamily}`
-        }
+        // Gecko will not report a font shorthand string, so we'll help
+        // it out. We omit lineHeight because Canvas will ignore it anyway
+        // (see buildPenaltyBox.js and measureText.js for implementation
+        // details)
+        cached.font = next.font ||
+          `${fontStyle} ${fontVariant} ${fontWeight} ${fontSize} ${fontFamily}`
       }
     }
 
-    const rootStyles = cachedStyles[rootId];
-    const { textAlign, textIndent, lineHeight, width } =
-      computedStyles[rootId];
+    const rootStyles = cachedStyles[0];
+    const { textAlign, textIndent, fontSize, lineHeight } = computedStyles[0];
+    const { width } = containerStyles;
 
     if (rootStyles.textAlign !== textAlign) {
       penaltyBoxIsOutdated = true;
@@ -193,7 +219,7 @@ export class Paragraph extends Component {
     // likewise if the penaltyBox has been wiped out by incoming children in
     // componentWillReceiveProps()
     if (penaltyBoxIsOutdated) this.penaltyBox =
-      buildPenaltyBox(virtualDOMNodes[rootId], computedStyles);
+      buildPenaltyBox(tree, computedStyles);
     
     let breaksAreOutdated = this.breaks === undefined;
 
@@ -215,7 +241,7 @@ export class Paragraph extends Component {
       // blink will report lineHeight as 'normal' in computed styles
       // instead of a calculated value in px.
       rootStyles.parsedLineHeight = (lineHeight === 'normal') ?
-        parseFloat(next.fontSize) * 1.14 :
+        rootStyles.parsedFontSize * 1.14 :
         parseFloat(lineHeight);
 
       this.forceUpdate();
@@ -224,57 +250,192 @@ export class Paragraph extends Component {
   }
 
   renderWithBreaks() {
+    const {
+      penaltyBox,
+      decoratedTree,
+      cachedStyles,
+      breaks: {
+        positions,
+        ratios
+      }
+    } = this;
 
-    const { penaltyBox, decoratedTree } = this;
-
-    let i = 0;
-    let lineNumber = 0;
+    const { parsedFontSize, parsedLineHeight } = cachedStyles[0];
+    let line = 0;
     let x = 0;
-    let y = 0;
+    // const halfLeading = (parsedLineHeight - parsedFontSize) / 2
+    // let y = parsedFontSize + halfLeading - (parsedFontSize * 0.2)
+    // simplifies to:
+    let y = parsedFontSize * 0.3 + parsedLineHeight * 0.5;
 
-    function recur() {
-      const node = decoratedTree.virtualDOMNodes[penaltyBox[i]];
-      i++;
-      const children = [];
-      const counter = {};
-      while (i < penaltyBox.length) {
-        const e = penaltyBox[i];
-        if (typeof e === 'number' && e !== -1) {
-          children.push(recur());
-        } else {
-          i++;
-          if (e === -1) {
-            let key = node.type;
-            counter[key] = counter[key] || 0; key += counter[key]++;
-            return cloneElement(node, {key}, children);
-          } else if (e.Box) {
-            let key = e.value;
-            counter[key] = counter[key] || 0; key += counter[key]++;
-            children.push(<span key={key}>{e.value}</span>);
-          } else if (e.Glue) {
-            let key = ' ';
-            counter[key] = counter[key] || 0; key += counter[key]++;
-            children.push(<span key={key}>{' '}</span>);
-          }
-        }
+    const stack = [{
+      node: decoratedTree.tree,
+      cursor: 0,
+      children: [],
+      counter: new Counter()
+    }];
+    console.log(positions);
+
+    let breakIndex = positions[line];
+    let ratio = ratios[line];
+    for (let i = 1; i < penaltyBox.length; i++) {
+      if (i > breakIndex) {
+        line += 1;
+        breakIndex = positions[line];
+        ratio = ratios[line];
+        x = 0;
+        y += parsedLineHeight;
       }
 
-    }
-    // console.log(decoratedTree.virtualDOMNodes[decoratedTree.rootId]);
-    return recur();
+      const e = penaltyBox[i];
+      if (e === OPEN_SCOPE) {
+        const thisFrame = stack[stack.length - 1];
 
-    // console.log(this.breaks);
-    return decoratedTree.virtualDOMNodes[decoratedTree.rootId];
+        const children = thisFrame.node.props.children;
+        const count = Children.count(children);
+
+        let nextNode;
+        if (count === 1) {
+          nextNode = children;
+        } else {
+          do {
+            nextNode = children[thisFrame.cursor];
+            thisFrame.cursor++;
+          } while (typeof nextNode !== 'object')
+        }
+
+        const nextFrame = {
+          node: nextNode,
+          cursor: 0,
+          children: [], 
+          counter: new Counter()
+        };
+
+
+
+      } else if (e === CLOSE_SCOPE) {
+
+        const thisFrame = stack.pop();
+
+        if (stack.length !== 0) {
+          const lastFrame = stack[stack.length - 1];
+
+          let key = thisFrame.node.type;
+          key += lastFrame.counter.count(key);
+
+          lastFrame.children.push(
+            <tspan key={key}
+                   style={{...cachedStyles[thisFrame.node.props.uniqueNodeId]}}>
+              {thisFrame.children}
+            </tspan>
+          );
+        } else {
+          return (
+            <text style={{...cachedStyles[0]}}>
+              {thisFrame.children}
+            </text>
+          );
+        }
+
+      } else {
+        if (e.Penalty) continue;
+        const { counter, children } = stack[stack.length - 1];
+
+        const textNode = e.Box ? e.value : ' ';
+        let key = textNode;
+        key += counter.count(key);
+
+        children.push(
+          <tspan key={key}
+                 x={x}
+                 y={y}>
+            {textNode}
+          </tspan>
+        );
+
+        x += e.width;
+        if (e.Glue) x += ratio * (ratio < 0 ? e.shrink : e.stretch);
+
+      }
+    }
   }
 
   render() {
-    if (this.breaks) {
-      console.log('rendering breaks')
-      return this.renderWithBreaks();
-    } else {
-      console.log('rendering decorated tree')
-      return this.decoratedTree.virtualDOMNodes[this.decoratedTree.rootId];
-    }
+    const rootStyles = this.decoratedTree.computedStyles[0];
+    return (
+      <div ref={element => {
+        // Okay, this is weird. I wrap the decorated tree in a div with
+        // {display: none} to suppress visual presentation of the original
+        // markup but leave it in place in the DOM so that
+        // updateComputedStyles() can check on its computed styles during
+        // requestAnimationFrame (this lets us monitor and respond to CSS
+        // animations which are otherwise invisible to us in JavaScript).
+        // However, {display: none} prevents the DOM from calculating a width
+        // for the decorated tree's container element. Therefore, we monitor
+        // the width on this container element instead, propagating any inline
+        // width styles forward, if we find them.
+        //
+        // TODO: The guard clause on this ref callback seems to be necessary in
+        // Chrome and Firefox, but not in Safari. Investigate.
+        if (element) {
+          this.containerStyles = window.getComputedStyle(element);
+        }
+      }}
+           style={
+            this.props.style && this.props.style.width ?
+              {width: this.props.style.width} :
+              {}
+      }>
+        <div style={
+          // TODO: Not sure why I can't use this conditional to switch the
+          // value between 'none' and 'normal'.
+          (this.breaks && !this.breaks.error) ? {display: 'none'} : {}
+        }>
+          {
+            this.breaks && this.breaks.error &&
+            <div style={
+              {
+                fontFamily: 'monospace',
+                backgroundColor: 'red'
+              }
+            }>
+              {this.breaks.error.message}
+            </div>
+          }
+          { this.decoratedTree.tree }
+        </div>
+        {
+          this.breaks && !this.breaks.error &&
+          <svg style={
+            {
+              width: rootStyles.width === 'auto' ? '100%' : rootStyles.width,
+              height: this.cachedStyles[0].parsedLineHeight * this.breaks.positions.length,
+              marginTop: rootStyles.marginTop,
+              marginRight: rootStyles.marginRight,
+              marginBottom: rootStyles.marginBottom,
+              marginLeft: rootStyles.marginLeft,
+              borderTop: rootStyles.borderTop,
+              borderRight: rootStyles.borderRight,
+              borderBottom: rootStyles.borderBottom,
+              borderLeft: rootStyles.borderLeft,
+              paddingTop: rootStyles.paddingTop,
+              paddingRight: rootStyles.paddingRight,
+              paddingBottom: rootStyles.paddingBottom,
+              paddingLeft: rootStyles.paddingLeft
+            }
+          }>
+            { this.renderWithBreaks() }
+          </svg>
+        }
+      </div>
+    );
+    // if (this.breaks) {
+    //   console.log('rendering breaks')
+    //   return this.renderWithBreaks();
+    // } else {
+    //   console.log('rendering decorated tree')
+    //   return this.decoratedTree.tree;
+    // }
   }
 
 }

@@ -9,7 +9,8 @@ import { INFINITY } from 'typeset';
 
 const hyphenateLimitChars = 6;
 
-const CLOSE_SCOPE = -1;
+export const OPEN_SCOPE = 0;
+export const CLOSE_SCOPE = 1;
 
 const EOL_GLUE = {
   Glue: true,
@@ -39,7 +40,7 @@ const glueRegex = /([\t\n\f\r ]*)([^\t\n\f\r ]*)/g;
 // will not be consolidated into a glue run , but will survive until
 // being parsed into a forced break by UAX 14.
 
-export default function buildPenaltyBox(rootNode, styles) {
+export function buildPenaltyBox(rootNode, styles) {
   const stack = [];
   const penaltyBox = [];
 
@@ -50,13 +51,7 @@ export default function buildPenaltyBox(rootNode, styles) {
       const { uniqueNodeId, children } = virtualDOMNode.props;
       // Open a new scope.
       stack.push(uniqueNodeId);
-      // We're going to do a stupid weak-typing trick here and push the vDOM
-      // node ID into the penalty box to mark the opening of a new scope. The
-      // linebreaking algorithm will just ignore this node, and we'll use it
-      // when it's time to fold the penalty box back up into a vDOM tree.
-      //
-      // TODO: Make this type safe
-      penaltyBox.push(uniqueNodeId);
+      penaltyBox.push(OPEN_SCOPE);
       // recur
       Children.forEach(children, recur);
       // close scope
@@ -121,6 +116,5 @@ export default function buildPenaltyBox(rootNode, styles) {
   recur(rootNode);
   penaltyBox.push(EOL_GLUE);
   penaltyBox.push(EOL_PENALTY);
-  console.log(penaltyBox);
   return penaltyBox;
 }
