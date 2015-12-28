@@ -59,6 +59,8 @@ jQuery(function ($) {
           hyphenateLimitChars: 6
         });
 
+        console.log(nodes);
+
         // Perform the line breaking
         let breaks;
         for (let tolerance = 1; tolerance <= 3; tolerance++) {

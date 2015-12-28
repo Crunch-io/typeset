@@ -2,8 +2,35 @@
 <html>
   <head>
     <title>React Responsive Linebreaker Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
   <body>
+    <style>
+      p {
+        text-align: justify;
+        font-family: 'Garamond Premier Pro';
+        font-size: 25px;
+        line-height: 1.62;
+        -ms-hyphens: auto;
+        -moz-hyphens: auto;
+        -webkit-hyphens: auto;
+        hyphens: auto;
+      }
+      p * {
+        /*border: 1px solid #CCC;*/
+      }
+      b {
+/*        -webkit-transition: font-size 0.25s;
+        transition: font-size 0.25s;*/
+      }
+      b:hover {
+        /*font-size: 48px;*/
+      }
+      span {
+/*        -webkit-transition: left 0.1s;
+        transition: left 0.1s;*/
+      }
+    </style>
     <div id="root"></div>
     <script type="text/javascript" src="../commons.js"></script>
     <script type="text/javascript" src="bundle.js"></script>

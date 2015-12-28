@@ -1,6 +1,6 @@
 import { Children, cloneElement } from 'react';
 
-export default function decorateVirtualDOMTreeWithRefs(rootNode) {
+export default function(rootNode) {
   const computedStyles = [];
   let i = 0; // wide scope
 
@@ -16,7 +16,9 @@ export default function decorateVirtualDOMTreeWithRefs(rootNode) {
         ...node.props,
         uniqueNodeId,
         key: uniqueNodeId,
-        ref: element => computedStyles[uniqueNodeId] = window.getComputedStyle(element)
+        ref: element => {
+          if (element) computedStyles[uniqueNodeId] = window.getComputedStyle(element)
+        }
       },
       Children.map(node.props.children, recur)
     );

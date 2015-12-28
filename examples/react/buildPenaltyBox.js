@@ -1,5 +1,5 @@
 import { Children } from 'react';
-import { glue, box, penalty } from './measureText';
+import { glue, box, hyphen, freeBreak } from './metrics';
 
 import UAX14 from 'linebreak';
 import Hypher from 'hypher';
@@ -48,26 +48,45 @@ export function buildPenaltyBox(rootNode, styles) {
     // could use `if (React.isValidElement(virtualDOMNode))` instead, for
     // maximum correctness.
     if (typeof virtualDOMNode !== 'string') { // recursive case
-      const { uniqueNodeId, children } = virtualDOMNode.props;
       // Open a new scope.
-      stack.push(uniqueNodeId);
+      stack.push(virtualDOMNode);
       penaltyBox.push(OPEN_SCOPE);
       // recur
-      Children.forEach(children, recur);
+      Children.forEach(virtualDOMNode.props.children, recur);
       // close scope
       penaltyBox.push(CLOSE_SCOPE);
       stack.pop();
     } else { // Base case: a text node.
       // obtain the font for this scope
       const container = stack[stack.length - 1];
-      const font = styles[container].font;
+      const style = styles[container.props.uniqueNodeId];
+
+      const font = style.font ||
+          // Gecko will not report a font shorthand string, so we'll build one
+          // for it.
+          `${style.fontStyle} ${style.fontVariant} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+
+      const wordSpacing = style.wordSpacing === '0px' ?
+        parseFloat(style.fontSize) / 4 :
+        parseFloat(style.wordSpacing);
+
+      const hyphens = style.hyphens ||
+                      style.WebkitHyphens ||
+                      style.MozHyphens ||
+                      style.msHyphens ||
+                      (container.props && container.props.style ? (
+                        container.props.style.hyphens ||
+                        container.props.style.WebkitHyphens ||
+                        container.props.style.MozHyphens ||
+                        container.props.style.msHyphens
+                      ) : undefined);
 
       while(true) { // consolidate runs of glue and split.
         let [match, whitespace, string] = glueRegex.exec(virtualDOMNode);
 
         if (!match) break;
         
-        if (whitespace) penaltyBox.push(glue(font));
+        if (whitespace) penaltyBox.push(glue(wordSpacing));
 
         if (string) {
           const string_length = string.length;
@@ -75,34 +94,40 @@ export function buildPenaltyBox(rootNode, styles) {
           // spaces with width semantics, and non-breaking spaces. We apply
           // the unicode linebreaking algorithm.
           let breaker = new UAX14(string);
-          let lastBreakPosition = 0;
+          let lastPosition = 0;
           // TODO: I wish this didn't allocate
           let bk = breaker.nextBreak();
           if (bk.position !== string_length) {
             // continue breaking using UAX 14 semantics
-            do {
-              const fragment = string.slice(lastBreakPosition, bk.position);
-              lastBreakPosition = bk.position;
+
+            while(true) {
+              const fragment = string.slice(lastPosition, bk.position);
+              lastPosition = bk.position;
               penaltyBox.push(box(font, fragment));
-              if (bk.required) {
+              const required = bk.required;
+              bk = breaker.nextBreak();
+              if (required) {
                 penaltyBox.push(EOL_GLUE);
                 penaltyBox.push(EOL_PENALTY);
+              } else if (bk) {
+                penaltyBox.push(freeBreak);
+              } else {
+                break;
               }
-            } while (bk = breaker.nextBreak())
+            }
+
           } else if (string_length >= hyphenateLimitChars) {
             // hyphenate
             // TODO: I wish this didn't allocate
-            const syllables = h.hyphenate(string);
-            const syllables_length = syllables.length;
-            for (let syllable_index = 0;
-                 syllable_index < syllables_length;
-                 syllable_index++) {
-              const syllable = syllables[syllable_index];
-              // push each syllable
-              penaltyBox.push(box(font, syllable));
-              if (syllable_index !== syllables_length - 1) {
-                penaltyBox.push(penalty(font, syllable, syllables[syllable_index + 1]));
+            const syllables = hyphens === 'none' ? string :
+                              hyphens === 'auto' ? h.hyphenate(string) :
+                              string.split('\u00AD'); // SOFT HYPHEN
+            for (let i = 0; i < syllables.length; i++) {
+              const syllable = syllables[i];
+              if (i !== 0) {
+                penaltyBox.push(hyphen(font, syllable, syllables[i + 1]));
               }
+              penaltyBox.push(box(font, syllable));
             }
           } else {
             // string is too short to hyphenate, push the complete string

@@ -274,7 +274,7 @@ export function linebreak(
 
 	const d = window.performance.now()-start;
 	t += d;
-	console.log(`Pass at tolerance = ${tolerance} took ${d.toFixed(3)}ms; total = ${t.toFixed(3)}ms`);
+	// console.log(`Pass at tolerance = ${tolerance} took ${d.toFixed(3)}ms; total = ${t.toFixed(3)}ms`);
 
 	return breaks;
 };

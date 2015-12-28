@@ -18,7 +18,7 @@ app.use(webpackDevMiddleware(compiler, {
 
 app.use(webpackHotMiddleware(compiler));
 
-app.listen(3000, 'localhost', err => {
+app.listen(3000, null, err => {
   if (err) {
     console.log(err);
     return;
