@@ -8,6 +8,7 @@ let t = 0;
  *
  * Licensed under the new BSD License.
  * Copyright 2009-2010, Bram Stein
+ * Copyright 2015, April Arcus
  * All rights reserved.
  */
 

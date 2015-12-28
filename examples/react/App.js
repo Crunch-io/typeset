@@ -24,7 +24,7 @@ export class App extends Component {
     };
     // setInterval(
     //   () => this.setState({ tag: this.state.tag === 'p' ? Paragraph : 'p' }),
-    //   1000
+    //   3000
     // );
     // setInterval(
     //   () => this.setState({ header: (this.state.header + 1) % 3 }),
