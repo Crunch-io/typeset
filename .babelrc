@@ -1,4 +1,4 @@
 {
-  "presets": ["es2015", "react"],
-  "plugins": ["transform-exponentiation-operator"]
+  "presets": ["es2015"],
+  "plugins": ["transform-exponentiation-operator", "transform-flow-strip-types"]
 }
