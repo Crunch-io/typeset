@@ -112,7 +112,7 @@ function formatter({
 
     });
     timeAssemblingNodes += window.performance.now() - start;
-    console.log(`Time Measuring Text: ${timeMeasuringText}; Time Assembling Nodes: ${timeAssemblingNodes}`);
+    //console.log(`Time Measuring Text: ${timeMeasuringText}; Time Assembling Nodes: ${timeAssemblingNodes}`);
     return nodes;
 }
 
