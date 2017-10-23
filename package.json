@@ -16,19 +16,17 @@
     "url": "https://github.com/AprilArcus/typeset/issues"
   },
   "homepage": "https://github.com/AprilArcus/typeset#readme",
-  "devDependencies": {
-    "babel-core": "^6.1.2",
-    "brfs": "^1.4.1",
-    "express": "^4.13.3",
-    "jquery": "^2.1.4",
-    "babel-plugin-transform-exponentiation-operator": "^6.8.0",
-    "babel-plugin-transform-flow-strip-types": "^6.14.0"
-  },
   "dependencies": {
+    "babel-core": "^6.1.2",
+    "babel-plugin-transform-exponentiation-operator": "^6.8.0",
+    "babel-plugin-transform-flow-strip-types": "^6.14.0",
     "babel-polyfill": "^6.0.16",
     "babel-preset-env": "^1.6.1",
+    "brfs": "^1.4.1",
+    "express": "^4.13.3",
     "hyphenation.en-us": "^0.2.1",
     "hypher": "^0.2.3",
+    "jquery": "^2.1.4",
     "linebreak": "^0.3.0",
     "lodash": "^3.10.1"
   },
