@@ -29,5 +29,21 @@
     "jquery": "^2.1.4",
     "linebreak": "^0.3.0",
     "lodash": "^3.10.1"
+  },
+  "browserify": {
+    "transform": [
+      [
+        "babelify",
+        {
+          "presets": [
+            "env"
+          ],
+          "plugins": [
+            "transform-exponentiation-operator",
+            "transform-flow-strip-types"
+          ]
+        }
+      ]
+    ]
   }
 }

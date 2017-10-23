@@ -1,4 +1,0 @@
-{
-  "presets": ["env"],
-  "plugins": ["transform-exponentiation-operator", "transform-flow-strip-types"]
-}
