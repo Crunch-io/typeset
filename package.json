@@ -1,6 +1,6 @@
 {
   "name": "typeset",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "TeX line breaking algorithm in JavaScript",
   "main": "dist/index.js",
   "scripts": {
