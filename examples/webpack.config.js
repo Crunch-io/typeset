@@ -17,17 +17,17 @@ export default {
     }
   },
   module: {
-    loaders: [
+    rules: [
       {
         test: /\.js$/,
         loaders: ['react-hot', 'babel'],
         exclude: /node_modules/
-      }
-    ],
-    postLoaders: [
+      },
       {
+        enforce: 'post',
         loader: "transform?brfs"
       }
+
     ]
   },
   output: {
