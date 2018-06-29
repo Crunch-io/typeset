@@ -17,9 +17,6 @@ var english = require('hyphenation.en-us');
 var h = new Hypher(english);
 
 
-var timeAssemblingNodes = 0;
-var timeMeasuringText = 0;
-
 function formatter() {
     var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
         text = _ref.text,
@@ -41,12 +38,8 @@ function formatter() {
         hyphenateLimitChars = _ref$hyphenateLimitCh === undefined ? 5 : _ref$hyphenateLimitCh;
 
 
-    var start = window.performance.now();
     var spaceWidth = measureText('\xA0');
     var hyphenWidth = measureText('-');
-    timeMeasuringText += window.performance.now() - start;
-    start = window.performance.now();
-
     var spaceStretch = spaceWidth * width / stretch;
     var spaceShrink = spaceWidth * width / shrink;
     var hyphenPenalty = 100;
@@ -71,11 +64,7 @@ function formatter() {
             // TODO: remove second argument 'en'
             var syllables = h.hyphenate(word, 'en');
             syllables.forEach(function (part, partIndex, partArray) {
-                timeAssemblingNodes += window.performance.now() - start;
-                start = window.performance.now();
                 var length = measureText(part);
-                timeMeasuringText += window.performance.now() - start;
-                start = window.performance.now();
 
                 nodes.push((0, _linebreak.box)(length, part));
                 if (partIndex !== partArray.length - 1) {
@@ -83,11 +72,7 @@ function formatter() {
                 }
             });
         } else {
-            timeAssemblingNodes += window.performance.now() - start;
-            start = window.performance.now();
             var length = measureText(word);
-            timeMeasuringText += window.performance.now() - start;
-            start = window.performance.now();
 
             nodes.push((0, _linebreak.box)(length, word));
         }
@@ -126,8 +111,6 @@ function formatter() {
                 break;
         }
     });
-    timeAssemblingNodes += window.performance.now() - start;
-    //console.log(`Time Measuring Text: ${timeMeasuringText}; Time Assembling Nodes: ${timeAssemblingNodes}`);
     return nodes;
 }
 

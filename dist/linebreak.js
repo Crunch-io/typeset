@@ -11,8 +11,6 @@ exports.linebreak = linebreak;
 
 var _linkedList = require('./linked-list');
 
-var t = 0;
-
 /**
  * @preserve Knuth and Plass line breaking algorithm in JavaScript
  *
@@ -23,7 +21,6 @@ var t = 0;
  */
 
 var INFINITY = exports.INFINITY = 10000;
-
 function glue(width, stretch, shrink) {
 	return { Glue: true, width: width, stretch: stretch, shrink: shrink };
 };
@@ -66,8 +63,6 @@ function linebreak(nodes, lineLengths) {
 	    flagged = _ref$demerits$flagged === undefined ? 100 : _ref$demerits$flagged,
 	    _ref$demerits$fitness = _ref$demerits.fitness,
 	    fitness = _ref$demerits$fitness === undefined ? 3000 : _ref$demerits$fitness;
-
-	var start = window.performance.now();
 
 	function computeCost(start, end, active, currentLine) {
 		var lastNode = nodes[end];
@@ -275,11 +270,5 @@ function linebreak(nodes, lineLengths) {
 		cursor = cursor.data.previous;
 	}
 
-	var breaks = { positions: positions, ratios: ratios, error: undefined };
-
-	var d = window.performance.now() - start;
-	t += d;
-	// console.log(`Pass at tolerance = ${tolerance} took ${d.toFixed(3)}ms; total = ${t.toFixed(3)}ms`);
-
-	return breaks;
+	return { positions: positions, ratios: ratios, error: undefined };
 };

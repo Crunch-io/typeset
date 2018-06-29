@@ -1,8 +1,6 @@
 /* @flow */
 import { LinkedList, Node } from './linked-list';
 
-let t = 0;
-
 /**
  * @preserve Knuth and Plass line breaking algorithm in JavaScript
  *
@@ -50,8 +48,6 @@ export function linebreak(
 		demerits: { line = 10, flagged = 100, fitness = 3000 } = {}
 	} = {}
 ) {
-	const start = window.performance.now();
-
 	function computeCost(start, end, active, currentLine) {
 		const lastNode = nodes[end];
 		const penaltyWidth = lastNode.Penalty ? lastNode.width : 0
@@ -271,11 +267,5 @@ export function linebreak(
 		cursor = cursor.data.previous;
 	}
 
-	const breaks = { positions, ratios, error: undefined };
-
-	const d = window.performance.now()-start;
-	t += d;
-	// console.log(`Pass at tolerance = ${tolerance} took ${d.toFixed(3)}ms; total = ${t.toFixed(3)}ms`);
-
-	return breaks;
+	return { positions, ratios, error: undefined };
 };

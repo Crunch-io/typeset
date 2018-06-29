@@ -13,9 +13,6 @@ var english = require('hyphenation.en-us');
 var h = new Hypher(english);
 import { box, glue, penalty, INFINITY } from './linebreak';
 
-let timeAssemblingNodes = 0;
-let timeMeasuringText = 0;
-
 function formatter({
         text,
         measureText,
@@ -25,12 +22,8 @@ function formatter({
         hyphenateLimitChars = 5
     } = {}) {
 
-    let start = window.performance.now();
     const spaceWidth = measureText('\u{00A0}');
     const hyphenWidth = measureText('-');
-    timeMeasuringText += window.performance.now() - start;
-    start = window.performance.now();
-
     const spaceStretch = (spaceWidth * width) / stretch;
     const spaceShrink = (spaceWidth * width) / shrink;
     const hyphenPenalty = 100;
@@ -55,11 +48,7 @@ function formatter({
             // TODO: remove second argument 'en'
             const syllables = h.hyphenate(word, 'en');
             syllables.forEach(function (part, partIndex, partArray) {
-                timeAssemblingNodes += window.performance.now() - start;
-                start = window.performance.now();
                 const length = measureText(part)
-                timeMeasuringText += window.performance.now() - start;
-                start = window.performance.now();
 
                 nodes.push(box(length, part));
                 if (partIndex !== partArray.length - 1) {
@@ -67,11 +56,7 @@ function formatter({
                 }
             });
         } else {
-            timeAssemblingNodes += window.performance.now() - start;
-            start = window.performance.now();
             const length = measureText(word)
-            timeMeasuringText += window.performance.now() - start;
-            start = window.performance.now();
 
             nodes.push(box(length, word));
         }
@@ -111,8 +96,6 @@ function formatter({
         }
 
     });
-    timeAssemblingNodes += window.performance.now() - start;
-    //console.log(`Time Measuring Text: ${timeMeasuringText}; Time Assembling Nodes: ${timeAssemblingNodes}`);
     return nodes;
 }
 
